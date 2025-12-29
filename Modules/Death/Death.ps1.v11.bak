@@ -1,0 +1,190 @@
+<#
+.SYNOPSIS
+    Memento Mori - Visual Glitch UI
+
+.DESCRIPTION
+    This script generates a fullscreen, blocking WPF window with a stable, text-only horror aesthetic,
+    now including a randomly selected, glitching background image.
+
+.NOTES
+    Author: Gemini (Visual Glitch Version)
+    Date: 2025-12-27
+    Version: 11.0 "Visual Glitch"
+#>
+
+#region --- Setup & Configuration ---
+$PSScriptRoot = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition
+$LogFilePath = Join-Path -Path $PSScriptRoot -ChildPath "Death.log"
+$VisualsDir = Join-Path -Path $PSScriptRoot -ChildPath "Visuals"
+$SoundFilePath = Join-Path -Path $PSScriptRoot -ChildPath "flatline.wav"
+
+Add-Type -AssemblyName PresentationFramework, System.Windows.Forms
+
+function Write-Log {
+    param([string]$Message)
+    
+    # Ensure the module's log directory exists
+    if (-not (Test-Path -Path $PSScriptRoot -PathType Container)) {
+        New-Item -Path $PSScriptRoot -ItemType Directory -Force | Out-Null
+    }
+
+    $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    "[$Timestamp] | DEATH | $Message" | Out-File -FilePath $LogFilePath -Append
+}
+
+# Get a random image
+$ImageFiles = Get-ChildItem -Path $VisualsDir -Include *.jpg, *.jpeg, *.png, *.webp, *.avif -Recurse
+$RandomImage = $ImageFiles | Get-Random
+$RandomImagePath = $RandomImage.FullName
+#endregion
+
+#region --- WPF GUI Definition (Visual Glitch UI v11.0) ---
+[xml]$Xaml = @"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MEMENTO MORI"
+        WindowState="Maximized" WindowStyle="None" Topmost="True"
+        Background="Black">
+
+    <Window.Resources>
+        <Storyboard x:Key="HeaderPulseAnimation">
+            <DoubleAnimation Storyboard.TargetName="HeaderGlow" Storyboard.TargetProperty="BlurRadius" From="20" To="40" Duration="0:0:4" AutoReverse="True" RepeatBehavior="Forever" />
+        </Storyboard>
+
+        <Storyboard x:Key="TextFlickerAnimation">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity" RepeatBehavior="Forever">
+                <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:5" />
+                <LinearDoubleKeyFrame Value="0.85" KeyTime="0:0:5.1" />
+                <LinearDoubleKeyFrame Value="1.0" KeyTime="0:0:5.2" />
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+
+        <Storyboard x:Key="ImageGlitchAnimation">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetName="GlitchImageTranslate" Storyboard.TargetProperty="X" RepeatBehavior="Forever">
+                <LinearDoubleKeyFrame Value="0" KeyTime="0:0:2" />
+                <LinearDoubleKeyFrame Value="-15" KeyTime="0:0:2.05" />
+                <LinearDoubleKeyFrame Value="15" KeyTime="0:0:2.1" />
+                <LinearDoubleKeyFrame Value="0" KeyTime="0:0:2.15" />
+                <LinearDoubleKeyFrame Value="0" KeyTime="0:0:4" />
+                <LinearDoubleKeyFrame Value="20" KeyTime="0:0:4.05" />
+                <LinearDoubleKeyFrame Value="-20" KeyTime="0:0:4.1" />
+                <LinearDoubleKeyFrame Value="0" KeyTime="0:0:4.15" />
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+
+        <Style x:Key="PainfulButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Black" />
+            <Setter Property="Foreground" Value="#888888" />
+            <Setter Property="BorderBrush"><Setter.Value><SolidColorBrush Color="#444444" /></Setter.Value></Setter>
+            <Setter Property="BorderThickness" Value="2" />
+            <Setter Property="FontFamily" Value="Impact"/>
+            <Setter Property="FontSize" Value="28" />
+            <Setter Property="Padding" Value="100,20" />
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="#FF0000"/>
+                    <Setter Property="BorderBrush" Value="#FF0000"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Window.Triggers>
+        <EventTrigger RoutedEvent="Window.Loaded">
+            <BeginStoryboard Storyboard="{StaticResource HeaderPulseAnimation}" />
+            <BeginStoryboard Storyboard="{StaticResource ImageGlitchAnimation}" />
+        </EventTrigger>
+    </Window.Triggers>
+
+    <Grid>
+        <Image x:Name="BackgroundImage" Stretch="UniformToFill" Opacity="0.3">
+            <Image.RenderTransform>
+                <TranslateTransform x:Name="GlitchImageTranslate" X="0" Y="0" />
+            </Image.RenderTransform>
+        </Image>
+
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="50">
+            <TextBlock Text=" 💀 MEMENTO MORI 💀 " FontFamily="Garamond" FontSize="60" Foreground="#FF0000" TextAlignment="Center" Margin="0,0,0,50">
+                <TextBlock.Effect><DropShadowEffect x:Name="HeaderGlow" Color="#AA0000" ShadowDepth="0" BlurRadius="30" Opacity="1.5"/></TextBlock.Effect>
+            </TextBlock>
+	    <TextBlock x:Name="BodyText0" Text=" 🔥 KARAN SINGH VERMA 🔥 " FontFamily="Garamond" FontSize="48" Foreground="#FF0000" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20"><TextBlock.Effect><DropShadowEffect Color="#AA0000" ShadowDepth="0" BlurRadius="10" Opacity="1"/></TextBlock.Effect></TextBlock>
+            <TextBlock x:Name="BodyText1" Text=" ☠️ Be Aware Of Your Mortality ☠️ " FontFamily="Garamond" FontSize="48" Foreground="#FF0000" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20"><TextBlock.Effect><DropShadowEffect Color="#AA0000" ShadowDepth="0" BlurRadius="10" Opacity="1"/></TextBlock.Effect></TextBlock>
+            <TextBlock x:Name="BodyText2" Text=" You Are Dying. " FontFamily="Garamond" FontSize="48" Foreground="#FF0000" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20"><TextBlock.Effect><DropShadowEffect Color="#AA0000" ShadowDepth="0" BlurRadius="10" Opacity="1"/></TextBlock.Effect></TextBlock>
+            <TextBlock x:Name="BodyText3" Text=" Your Days Are Numbered. " FontFamily="Garamond" FontSize="48" Foreground="#FF0000" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20"><TextBlock.Effect><DropShadowEffect Color="#AA0000" ShadowDepth="0" BlurRadius="10" Opacity="1"/></TextBlock.Effect></TextBlock>
+            <TextBlock x:Name="BodyText4" Text=" Accept Your Mortality. " FontFamily="Garamond" FontSize="48" Foreground="#FF0000" TextAlignment="Center" TextWrapping="Wrap" Margin="0,20,0,60"><TextBlock.Effect><DropShadowEffect Color="#AA0000" ShadowDepth="0" BlurRadius="10" Opacity="1"/></TextBlock.Effect></TextBlock>
+            <Button Name="AcceptButton" Content=" Yes I am aware I am dying. " Style="{StaticResource PainfulButtonStyle}" HorizontalAlignment="Center" />
+        </StackPanel>
+        
+        <Rectangle x:Name="FlashPanel" Fill="White" Visibility="Collapsed" Panel.ZIndex="3" />
+    </Grid>
+</Window>
+"@
+#endregion
+
+#region --- GUI Logic & Execution ---
+try {
+    $Reader = [System.Xml.XmlNodeReader]::new($Xaml)
+    $Window = [Windows.Markup.XamlReader]::Load($Reader)
+
+    # --- Find UI Elements ---
+    $AcceptButton = $Window.FindName("AcceptButton")
+    $FlashPanel = $Window.FindName("FlashPanel")
+    $BackgroundImage = $Window.FindName("BackgroundImage")
+    
+    # --- Set Image Source ---
+    if ($RandomImagePath) {
+        $Bitmap = [System.Windows.Media.Imaging.BitmapImage]::new()
+        $Bitmap.BeginInit()
+        $Bitmap.UriSource = [System.Uri]$RandomImagePath
+        $Bitmap.EndInit()
+        $BackgroundImage.Source = $Bitmap
+        Write-Log "Visual Glitch UI loaded image: $RandomImagePath"
+    } else {
+        Write-Log "No images found in Visuals directory."
+    }
+
+    # --- Setup Sound Player ---
+    $SoundPlayer = [System.Media.SoundPlayer]::new()
+    if (Test-Path $SoundFilePath) { $SoundPlayer.SoundLocation = $SoundFilePath; $SoundPlayer.LoadAsync() }
+
+    # --- Button Click Logic ---
+    $AcceptButton.Add_Click({
+        Write-Log "User acknowledged mortality (Visual Glitch UI)."
+        $FlashPanel.Visibility = 'Visible'
+        if ($SoundPlayer.IsLoadCompleted) { $SoundPlayer.PlaySync() }
+        Start-Sleep -Milliseconds 50
+        $Window.Close()
+    })
+    
+    # --- Window Lifecycle Events ---
+    $Window.Add_Loaded({
+        # Apply flicker animation to text blocks
+        $FlickerStoryboard = $Window.Resources["TextFlickerAnimation"]
+        'BodyText0', 'BodyText1','BodyText2','BodyText3','BodyText4' | ForEach-Object {
+            $FlickerStoryboard.Begin($Window.FindName($_), $true)
+        }
+        Write-Log "Visual Glitch UI Initialized."
+    })
+
+    $Window.Add_Closing({
+        $SoundPlayer.Dispose()
+        Write-Log "Visual Glitch UI Closed."
+    })
+
+    # Execute the dialog window
+    $Window.ShowDialog() | Out-Null
+
+} catch {
+    Write-Log "FATAL ERROR in Visual Glitch UI: $_"
+}
+#endregion
