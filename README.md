@@ -1,4 +1,4 @@
-# SHAKSHI OVERWATCH: AUTOMATION DOCTRINE
+# SHAKSHI : AUTOMATION DOCTRINE
 
 ![Status](https://img.shields.io/badge/STATUS-ACTIVE%20SERVICE-brightgreen)
 ![Clearance](https://img.shields.io/badge/CLEARANCE-ARCHITECT%20ONLY-red)
